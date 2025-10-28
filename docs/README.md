@@ -17,6 +17,8 @@ Communication at OctoAcme is structured and cadence‑driven to keep work visibl
 - [Release and Deployment](octoacme-release-and-deployment.md)
 - [Retrospective and Continuous Improvement](octoacme-retrospective-and-continuous-improvement.md)
 - [Roles and Personas](octoacme-roles-and-personas.md)
+- [Process Checklists](process-checklists.md)
+- [Process Templates](process-templates.md)
 
 ## How to use these docs
 - Link to this README from project charters and onboarding materials.
