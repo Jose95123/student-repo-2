@@ -1,0 +1,76 @@
+name: Check Open Pull Requests
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every day at 9 AM UTC
+    - cron: '0 9 * * *'
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  check-prs:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Open Pull Requests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            // Get all open pull requests
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              sort: 'created',
+              direction: 'desc'
+            });
+            
+            console.log('='.repeat(80));
+            console.log('📋 Open Pull Requests Report');
+            console.log('='.repeat(80));
+            console.log(`Repository: ${owner}/${repo}`);
+            console.log(`Total Open PRs: ${pullRequests.length}`);
+            console.log('='.repeat(80));
+            
+            if (pullRequests.length === 0) {
+              console.log('✅ No open pull requests found.');
+            } else {
+              pullRequests.forEach((pr, index) => {
+                console.log(`\n${index + 1}. PR #${pr.number}: ${pr.title}`);
+                console.log(`   Author: ${pr.user.login}`);
+                console.log(`   Created: ${new Date(pr.created_at).toLocaleDateString()}`);
+                console.log(`   Status: ${pr.draft ? '🚧 Draft' : '✅ Ready for Review'}`);
+                console.log(`   Branch: ${pr.head.ref} → ${pr.base.ref}`);
+                console.log(`   URL: ${pr.html_url}`);
+                
+                // Show reviewers if any
+                if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
+                  const reviewers = pr.requested_reviewers.map(r => r.login).join(', ');
+                  console.log(`   Reviewers: ${reviewers}`);
+                }
+                
+                // Show labels if any
+                if (pr.labels && pr.labels.length > 0) {
+                  const labels = pr.labels.map(l => l.name).join(', ');
+                  console.log(`   Labels: ${labels}`);
+                }
+              });
+            }
+            
+            console.log('\n' + '='.repeat(80));
+            console.log('Report generated at:', new Date().toISOString());
+            console.log('='.repeat(80));
+            
+            // Set output for further steps if needed
+            core.setOutput('pr-count', pullRequests.length);
+            core.setOutput('has-open-prs', pullRequests.length > 0);
